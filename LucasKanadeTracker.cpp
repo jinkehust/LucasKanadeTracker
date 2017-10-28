@@ -10,15 +10,15 @@ bool isStartSet = 0;
 class LucasKanadeTracker
 {
 public:
-	void LowpassFilter(const Mat &image, Mat &result);//µÍÍ¨ÂË²¨
-	uchar get_value(Mat const &image, Point2f index);//¶ÁÈ¡ÏñËØ
-	uchar get_subpixel_value(Mat const &image, Point2f index);//ÏßĞÔ²åÖµ
-	void BuildPyramid(Mat const &input, vector <Mat> &outputArray, int maxLevel);//½¨Á¢Í¼Ïñ½ğ×ÖËş
+	void LowpassFilter(const Mat &image, Mat &result);//ä½é€šæ»¤æ³¢
+	uchar get_value(Mat const &image, Point2f index);//è¯»å–åƒç´ 
+	uchar get_subpixel_value(Mat const &image, Point2f index);//çº¿æ€§æ’å€¼
+	void BuildPyramid(Mat const &input, vector <Mat> &outputArray, int maxLevel);//å»ºç«‹å›¾åƒé‡‘å­—å¡”
 	int LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextImage,Mat &prevPoint, Mat &nextPoint);//LK
 };
 void LucasKanadeTracker::LowpassFilter(const Mat &image, Mat &result)
 {
-	Mat kernel(3, 3, CV_32F, Scalar(0));//3*3¾í»ıºË
+	Mat kernel(3, 3, CV_32F, Scalar(0));//3*3å·ç§¯æ ¸
 
 	kernel.at <float>(0, 0) = kernel.at <float>(2, 0) = 1.0f / 16.0f;
 	kernel.at <float>(0, 2) = kernel.at <float>(2, 2) = 1.0f / 16.0f;
@@ -29,7 +29,7 @@ void LucasKanadeTracker::LowpassFilter(const Mat &image, Mat &result)
 	filter2D(image, result, image.depth(), kernel);
 }
 
-uchar LucasKanadeTracker::get_value(Mat const &image, Point2f index)//²»Ô½½ç¶ÁÈ¡
+uchar LucasKanadeTracker::get_value(Mat const &image, Point2f index)//ä¸è¶Šç•Œè¯»å–
 {
 	if (index.x >= image.rows)   index.x = image.rows - 1.0f;
 	else if (index.x < 0)         index.x = .0f;
@@ -54,7 +54,7 @@ uchar LucasKanadeTracker::get_subpixel_value(Mat const &image, Point2f index)
 		+ (fractX * fractY * get_value(image, Point2f(floorX + 1.0f, floorY + 1.0f))));
 }
 
-void LucasKanadeTracker::BuildPyramid(Mat const &input, vector <Mat> &outputArray, int maxLevel)//¸ß²ãµÄÒ»¸öÏñËØ±íÊ¾µÍ²ãµÄÁ½¸öÏñËØ
+void LucasKanadeTracker::BuildPyramid(Mat const &input, vector <Mat> &outputArray, int maxLevel)//é«˜å±‚çš„ä¸€ä¸ªåƒç´ è¡¨ç¤ºä½å±‚çš„ä¸¤ä¸ªåƒç´ 
 {
 	outputArray.push_back(input);
 	for (int k = 1; k <= maxLevel; ++k)
@@ -75,7 +75,7 @@ void LucasKanadeTracker::BuildPyramid(Mat const &input, vector <Mat> &outputArra
 				float indexX = 2 * i;
 				float indexY = 2 * j;
 
-				//¾í»ı
+				//å·ç§¯
 				float firstSum = (get_value(prevImage, Point2f(indexX, indexY))) / 4.0f;
 
 				float secondSum = .0f;
@@ -114,14 +114,14 @@ int LucasKanadeTracker::LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextI
 		int omegaX = 7;
 		int omegaY = 7;
 
-		// ¶¨Òå¾ØĞÎ´°¿Ú·¶Î§
+		// å®šä¹‰çŸ©å½¢çª—å£èŒƒå›´
 		float indexXLeft = currPoint.at <float>(0, 0) - omegaX;
 		float indexYLeft = currPoint.at <float>(1, 0) - omegaY;
 
 		float indexXRight = currPoint.at <float>(0, 0) + omegaX;
 		float indexYRight = currPoint.at <float>(1, 0) + omegaY;
 
-		//¶¨ÒåÌİ¶È¾ØÕó
+		//å®šä¹‰æ¢¯åº¦çŸ©é˜µ
 		Mat gradient(2, 2, CV_32F, Scalar(0));
 		
 		vector <Point2f> derivatives;
@@ -130,16 +130,16 @@ int LucasKanadeTracker::LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextI
 		{
 			for (float j = indexYLeft; j <= indexYRight; j += 1.0f)
 			{
-				//IL¶ÔXÇóÆ«µ¼Êı
+				//ILå¯¹Xæ±‚åå¯¼æ•°
 				float derivativeX = (get_subpixel_value(prevImage.at(level), Point2f(i + 1.0f, j))
 					- get_subpixel_value(prevImage.at(level), Point2f(i - 1.0f, j))) / 2.0f;
 
-				//IL¶ÔYÇóÆ«µ¼Êı
+				//ILå¯¹Yæ±‚åå¯¼æ•°
 				float derivativeY = (get_subpixel_value(prevImage.at(level), Point2f(i, j + 1.0f))
 					- get_subpixel_value(prevImage.at(level), Point2f(i, j - 1.0f))) / 2.0f;
 
 				derivatives.push_back(Point2f(derivativeX, derivativeY));
-				//¼ÆËãÌİ¶È¾ØÕó
+				//è®¡ç®—æ¢¯åº¦çŸ©é˜µ
 				gradient.at <float>(0, 0) += derivativeX * derivativeX;
 				gradient.at <float>(0, 1) += derivativeX * derivativeY;
 				gradient.at <float>(1, 0) += derivativeX * derivativeY;
@@ -154,7 +154,7 @@ int LucasKanadeTracker::LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextI
 		for (int k = 0; k < maxCount; ++k)
 		{
 			int cnt = 0;
-			//Í¼Ïñ²»Æ¥ÅäÏòÁ¿
+			//å›¾åƒä¸åŒ¹é…å‘é‡
 			Mat imageMismatch(2, 1, CV_32F, Scalar(0));
 			for (float i = indexXLeft; i <= indexXRight; i += 1.0f)
 			{
@@ -162,17 +162,17 @@ int LucasKanadeTracker::LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextI
 				{
 					float nextIndexX = i + piramidalGuess.at <float>(0, 0) + opticalFlow.at <float>(0, 0);
 					float nextIndexY = j + piramidalGuess.at <float>(1, 0) + opticalFlow.at <float>(1, 0);
-					//Í¼ÏñÏñËØ²î
+					//å›¾åƒåƒç´ å·®
 					int pixelDifference = (int)(get_subpixel_value(prevImage.at(level), Point2f(i, j))
 						- get_subpixel_value(nextImage.at(level), Point2f(nextIndexX, nextIndexY)));
-					//Í¼Ïñ²»Æ¥ÅäÏòÁ¿
+					//å›¾åƒä¸åŒ¹é…å‘é‡
 					imageMismatch.at <float>(0, 0) += pixelDifference * derivatives.at(cnt).x;
 					imageMismatch.at <float>(1, 0) += pixelDifference * derivatives.at(cnt).y;
 
 					cnt++;
 				}
 			}
-			//¹âÁ÷Ê¸Á¿
+			//å…‰æµçŸ¢é‡
 			opticalFlow += gradient * imageMismatch;
 		}
 
@@ -181,9 +181,9 @@ int LucasKanadeTracker::LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextI
 			piramidalGuess = 2 * (piramidalGuess + opticalFlow);
 
 	}
-	//×îºóµÄ¹âÁ÷Ê¸Á¿
+	//æœ€åçš„å…‰æµçŸ¢é‡
 	opticalFlowFinal += piramidalGuess;
-	//ÔÚÏÂÒ»Ö¡Í¼ÏñÉÏ±»¸ú×ÙµÄÌØÕ÷µã
+	//åœ¨ä¸‹ä¸€å¸§å›¾åƒä¸Šè¢«è·Ÿè¸ªçš„ç‰¹å¾ç‚¹
 	nextPoint = prevPoint + opticalFlowFinal;
 
 	if ((nextPoint.at <float>(0, 0) < 0) || (nextPoint.at <float>(1, 0) < 0) ||
@@ -197,7 +197,7 @@ int LucasKanadeTracker::LucasKanade(vector <Mat> &prevImage, vector <Mat> &nextI
 }
 
 
-//Êó±êÏìÓ¦ÊÂ¼ş
+//é¼ æ ‡å“åº”äº‹ä»¶
 static void onMouse(int event, int x, int y, int, void* ptr)
 {
 	if (event != CV_EVENT_LBUTTONDOWN)
@@ -213,16 +213,16 @@ static void onMouse(int event, int x, int y, int, void* ptr)
 int main()
 {
 	LucasKanadeTracker lk;
-	//´ò¿ªÎÄ¼ş¶ÁÈ¡Êı¾İ
-	VideoCapture capture("video.avi");
+	//æ‰“å¼€æ–‡ä»¶è¯»å–æ•°æ®
+	VideoCapture capture(0);
 
-	if (!capture.isOpened())//ÎÄ¼ş´æÔÚ
+	if (!capture.isOpened())//æ–‡ä»¶å­˜åœ¨
 	{
 		cout << "Cannot open the file" << endl;
 		return -1;
 	}
 
-	//»ñÈ¡ÊÓÆµÖ¡ÂÊ
+	//è·å–è§†é¢‘å¸§ç‡
 	double rate = capture.get(CV_CAP_PROP_FPS);
 	bool stop = false;
 
@@ -230,42 +230,39 @@ int main()
 	namedWindow("LucasKanade");
 	int delay = 1000 / rate;
 
-	//»ñÈ¡Êó±êµã»÷Î»ÖÃ
+	//è·å–é¼ æ ‡ç‚¹å‡»ä½ç½®
 	setMouseCallback("LucasKanade", onMouse);
 
-	capture.read(prevFrame);
+	capture>>prevFrame;
 	cvtColor(prevFrame, grayPrev, CV_RGB2GRAY);
-	//ÈôÎ´ÉèÖÃ³õÊ¼ÌØÕ÷µãÎ»ÖÃ£¬Í£ÁôÔÚµÚÒ»Ö¡»­Ãæ
+	//è‹¥æœªè®¾ç½®åˆå§‹ç‰¹å¾ç‚¹ä½ç½®ï¼Œåœç•™åœ¨ç¬¬ä¸€å¸§ç”»é¢
 	while (!isStartSet)
 	{
 		imshow("LucasKanade", prevFrame);
 		waitKey(30);
 	}
 
-	while (!stop)
+	while (1)
 	{
-		//´æ´¢ÉÏÒ»Ö¡Óëµ±Ç°µÄÍ¼Ïñ½ğ×ÖËş
+		//å­˜å‚¨ä¸Šä¸€å¸§ä¸å½“å‰çš„å›¾åƒé‡‘å­—å¡”
+		
 		vector <Mat> output1;
 		vector <Mat> output2;
-		//¶Áµ½×îºóÒ»Ö¡Ö®ºó£¬Ìø³öÑ­»·
-		if (!capture.read(frame)) break;
 		//RGB->Gray
+		capture>>frame;
 		cvtColor(frame, gray, CV_RGB2GRAY);
-		//·Ö±ğ¶ÔÉÏÒ»Ö¡ÒÔ¼°µ±Ç°Ö¡½¨Á¢Í¼Ïñ½ğ×ÖËş
+		//åˆ†åˆ«å¯¹ä¸Šä¸€å¸§ä»¥åŠå½“å‰å¸§å»ºç«‹å›¾åƒé‡‘å­—å¡”
 		lk.BuildPyramid(grayPrev, output1, 4);
 		lk.BuildPyramid(gray, output2, 4);
-		//½øĞĞLK¸ú×Ù
+		//è¿›è¡ŒLKè·Ÿè¸ª
 		lk.LucasKanade(output1, output2, start, finish);
 		circle(frame, Point((int)finish.at <float>(1, 0), (int)finish.at <float>(0, 0)), 9, Scalar(0, 0, 255));
 		imshow("LucasKanade", frame);
 
 		gray.copyTo(grayPrev);
 		finish.copyTo(start);
-
-		if (waitKey(delay) >= 0) stop = true;
+		waitKey(100);
+		
 	}
-	capture.release();
-	waitKey();
-
 	return 0;
 }
